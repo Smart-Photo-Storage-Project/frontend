@@ -1,8 +1,9 @@
 <template>
   <div class="w-screen overflow-x-hidden">
-    <LandingPage />
+    <router-view />
   </div>
 </template>
+
 
 <script setup>
 import LandingPage from '@/views/LandingPage.vue'
