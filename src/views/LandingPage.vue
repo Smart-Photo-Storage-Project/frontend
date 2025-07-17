@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import Navbar from '@/components/NavBar.vue'
+import Navbar from '@/components/NavigationBar.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import AppExplanation from '@/components/AppExplanation.vue'
 import Motivation from '@/components/Motivation.vue'
