@@ -1,5 +1,5 @@
 <template>
-  <section id="about" class="flex flex-col items-center justify-center bg-white text-gray-800 py-24 px-6">
+  <section id="about" class="flex flex-col items-center justify-center bg-white text-gray-800 pt-24 px-6">
     <div class="max-w-4xl mx-auto text-center">
       <h2 class="text-4xl font-bold mb-6">What is Smart Photo Storage?</h2>
       <p class="text-lg leading-relaxed py-5">
