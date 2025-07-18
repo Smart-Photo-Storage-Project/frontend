@@ -63,16 +63,40 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toast-notification'
+
+const router = useRouter()
+const toast = useToast()
+
 
 const name = ref('')
 const email = ref('')
 const password = ref('')
 
-function handleRegister() {
-  // Placeholder register logic
-  console.log('Name:', name.value)
-  console.log('Email:', email.value)
-  console.log('Password:', password.value)
-  alert('Registration attempted (check console)')
+async function handleRegister() {
+  try {
+    const res = await fetch('http://localhost:8080/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      })
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error || 'Registration failed')
+    }
+
+    toast.success('Successfully registered! Please log in.')
+    router.push('/login') // atau langsung login otomatis, terserah kamu
+  } catch (error) {
+    toast.error(`Error: ${error.message}`)
+  }
 }
+
 </script>

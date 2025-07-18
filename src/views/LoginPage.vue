@@ -61,14 +61,41 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toast-notification'
 
 const email = ref('')
 const password = ref('')
+const router = useRouter()
+const toast = useToast()
 
-function handleLogin() {
-  // Placeholder login logic
-  console.log('Email:', email.value)
-  console.log('Password:', password.value)
-  alert('Login attempted (check console)')
+async function handleLogin() {
+  try {
+    const res = await fetch('http://localhost:8080/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      })
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.message || 'Login failed')
+    }
+
+    const data = await res.json()
+    localStorage.setItem('token', data.token)
+    localStorage.setItem("user", JSON.stringify({ name: data.name }))
+
+    toast.success('Successful login')
+    router.push('/gallery')
+  } catch (error) {
+    toast.error(`Error: ${error.message}`)
+  }
 }
 </script>
+
