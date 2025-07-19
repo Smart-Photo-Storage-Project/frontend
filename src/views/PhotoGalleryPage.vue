@@ -14,44 +14,109 @@
     </div>
 
     <!-- Photo List -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      <div
-        v-for="(photo, index) in photos"
-        :key="index"
-        class="bg-gray-800 p-4 rounded shadow"
-      >
-        <img :src="photo.url" :alt="photo.name" class="rounded mb-2" />
-        <p class="font-semibold text-white py-2">{{ photo.name }}</p>
-      </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+  <div
+    v-for="(photo, index) in photos"
+    :key="index"
+    class="bg-gray-800 p-4 rounded shadow flex flex-col items-center cursor-pointer 
+         transition-transform transform hover:scale-105 hover:shadow-lg duration-200 ease-in-out"
+    @click="openPreview(photo)"
+    role="button"
+  >
+    <!-- Thumbnail box -->
+    <div
+      class="w-full h-48 bg-black flex items-center justify-center overflow-hidden mb-2 rounded"
+    >
+      <img
+        :src="photo.url"
+        :alt="photo.name"
+        class="max-h-full max-w-full object-contain"
+      />
     </div>
+
+    <!-- Photo name and date -->
+    <p class="font-semibold text-white py-1 text-center">{{ photo.name }}</p>
+    <p class="text-sm text-gray-400 text-center">
+      {{ new Date(photo.upload_at).toLocaleString() }}
+    </p>
+  </div>
+</div>
+
+<!-- Fullscreen Modal -->
+<div
+  v-if="selectedPhoto"
+  class="fixed inset-0 bg-gray-800 bg-opacity-90 flex items-center justify-center z-50"
+  @click.self="closePreview"
+>
+  <div class="max-w-full max-h-full">
+    <img :src="selectedPhoto.url" :alt="selectedPhoto.name" class="object-contain max-h-screen max-w-screen" />
+    <p class="text-white text-center mt-4">{{ selectedPhoto.name }}</p>
+  </div>
+</div>
+
+
   </section>
 </template>
 
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import NavigationBar from '@/components/NavigationBar.vue'
+import { useToast } from 'vue-toast-notification'
 
-const photos = ref([
-  {
-    url: 'http://localhost:8080/uploads/1752552162962188400_IMG_0045_comp_2.jpg',
-    name: 'Vacation in Bali'
-  },
-  {
-    url: 'http://localhost:8080/uploads/1752552162962188400_IMG_0045_comp_2.jpg',
-    name: 'Birthday Party'
-  },
-  {
-    url: 'http://localhost:8080/uploads/1752552162962188400_IMG_0045_comp_2.jpg',
-    name: 'Hiking Trip'
-  },
-  {
-    url: 'http://localhost:8080/uploads/1752552162962188400_IMG_0045_comp_2.jpg',
-    name: 'Old Family Photo'
-  },
-  {
-    url: 'http://localhost:8080/uploads/1752552162962188400_IMG_0045_comp_2.jpg',
-    name: 'Random Selfie'
+const photos = ref([])
+const router = useRouter()
+const toast = useToast()
+const baseUrl = 'http://localhost:8080/'
+
+
+const fetchPhotos = async () => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    toast.error('Please login to view your gallery')
+    router.push('/login')
+    return
   }
-])
+
+  try {
+    const res = await fetch(`${baseUrl}api/photos`, {
+      headers: {
+        'Authorization': `${token}`
+      }
+    })
+
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch photos')
+    }
+
+    const data = await res.json()
+
+    if (!data.photos || data.photos.length == 0){
+      throw new Error('No images found')
+    }
+
+    
+    photos.value = data.photos.map(photo => ({
+      name: photo.name,
+      url: baseUrl + photo.path.replace(/\\/g, '/'), // convert Windows path
+      upload_at: photo.upload_at * 1000
+    }))
+  } catch (err) {
+    toast.error(`Error: ${err.message}`)
+  }
+}
+
+onMounted(fetchPhotos)
+
+const selectedPhoto = ref(null)
+
+function openPreview(photo) {
+  selectedPhoto.value = photo
+}
+
+function closePreview() {
+  selectedPhoto.value = null
+}
 </script>

@@ -50,24 +50,52 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toast-notification' 
 
 const selectedFile = ref(null)
-const caption = ref('')
+const router = useRouter()
+const toast = useToast()
 
 function onFileChange(event) {
   selectedFile.value = event.target.files[0]
 }
 
-
-function handleUpload() {
+async function handleUpload() {
   if (!selectedFile.value) {
-    alert('Please select a file.')
-    return
+    throw new Error('Please select a file.')
   }
 
-  // Placeholder logic, to be replaced with actual upload to backend
-  console.log('Uploading:', selectedFile.value)
-  console.log('Caption:', caption.value)
-  alert('Photo uploaded (fake)!')
+  const token = localStorage.getItem('token')
+  if (!token) {
+    throw new Error('You must be logged in to upload.')
+  }
+
+  const formData = new FormData()
+  console.log(selectedFile.value)
+  formData.append('photo', selectedFile.value)
+
+  try {
+    const res = await fetch('http://localhost:8080/api/upload', {
+      method: 'POST',
+      headers: {
+        Authorization: `${token}`
+      },
+      body: formData
+    })
+
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(err || 'Upload failed.')
+    }
+
+    const data = await res.json()
+    toast.success('Photo uploaded successfully!')
+
+    router.push('/gallery')
+  } catch (err) {
+    console.error(err)
+    toast.error('Upload failed: ' + err.message)
+  }
 }
 </script>

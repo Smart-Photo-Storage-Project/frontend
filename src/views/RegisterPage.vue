@@ -82,6 +82,7 @@ async function handleRegister() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        name: name.value,
         email: email.value,
         password: password.value
       })
@@ -93,7 +94,7 @@ async function handleRegister() {
     }
 
     toast.success('Successfully registered! Please log in.')
-    router.push('/login') // atau langsung login otomatis, terserah kamu
+    router.push('/login')
   } catch (error) {
     toast.error(`Error: ${error.message}`)
   }
