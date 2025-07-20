@@ -13,46 +13,65 @@
       </router-link>
     </div>
 
-    <!-- Photo List -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-  <div
-    v-for="(photo, index) in photos"
-    :key="index"
-    class="bg-gray-800 p-4 rounded shadow flex flex-col items-center cursor-pointer 
-         transition-transform transform hover:scale-105 hover:shadow-lg duration-200 ease-in-out"
-    @click="openPreview(photo)"
-    role="button"
-  >
-    <!-- Thumbnail box -->
-    <div
-      class="w-full h-48 bg-black flex items-center justify-center overflow-hidden mb-2 rounded"
-    >
-      <img
-        :src="photo.url"
-        :alt="photo.name"
-        class="max-h-full max-w-full object-contain"
-      />
+    <!-- Search Form -->
+    <div class="text-center py-3">
+      <form @submit.prevent="handleSearch" class="inline-flex">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search photos..."
+          class="px-4 py-2 rounded-l bg-gray-700 text-white focus:outline-none"
+        />
+        <button
+          type="submit"
+          class="bg-slate-600 hover:bg-slate-500 cursor-pointer px-4 py-2 rounded-r text-white font-semibold transition"
+        >
+          Search
+        </button>
+      </form>
     </div>
 
-    <!-- Photo name and date -->
-    <p class="font-semibold text-white py-1 text-center">{{ photo.name }}</p>
-    <p class="text-sm text-gray-400 text-center">
-      {{ new Date(photo.upload_at).toLocaleString() }}
-    </p>
-  </div>
-</div>
 
-<!-- Fullscreen Modal -->
-<div
-  v-if="selectedPhoto"
-  class="fixed inset-0 bg-gray-800 bg-opacity-90 flex items-center justify-center z-50"
-  @click.self="closePreview"
->
-  <div class="max-w-full max-h-full">
-    <img :src="selectedPhoto.url" :alt="selectedPhoto.name" class="object-contain max-h-screen max-w-screen" />
-    <p class="text-white text-center mt-4">{{ selectedPhoto.name }}</p>
-  </div>
-</div>
+    <!-- Photo List -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div
+        v-for="(photo, index) in photos"
+        :key="index"
+        class="bg-gray-800 p-4 rounded shadow flex flex-col items-center cursor-pointer 
+            transition-transform transform hover:scale-105 hover:shadow-lg duration-200 ease-in-out"
+        @click="openPreview(photo)"
+        role="button"
+      >
+        <!-- Thumbnail box -->
+        <div
+          class="w-full h-48 bg-black flex items-center justify-center overflow-hidden mb-2 rounded"
+        >
+          <img
+            :src="photo.url"
+            :alt="photo.name"
+            class="max-h-full max-w-full object-contain"
+          />
+        </div>
+
+        <!-- Photo name and date -->
+        <p class="font-semibold text-white py-1 text-center">{{ photo.name }}</p>
+        <p class="text-sm text-gray-400 text-center">
+          {{ new Date(photo.upload_at).toLocaleString() }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Fullscreen Modal -->
+    <div
+      v-if="selectedPhoto"
+      class="fixed inset-0 bg-gray-800 bg-opacity-90 flex items-center justify-center z-50"
+      @click.self="closePreview"
+    >
+      <div class="max-w-full max-h-full">
+        <img :src="selectedPhoto.url" :alt="selectedPhoto.name" class="object-contain max-h-screen max-w-screen" />
+        <p class="text-white text-center mt-4">{{ selectedPhoto.name }}</p>
+      </div>
+    </div>
 
 
   </section>
@@ -69,9 +88,10 @@ const photos = ref([])
 const router = useRouter()
 const toast = useToast()
 const baseUrl = 'http://localhost:8080/'
+const searchQuery = ref('')
 
 
-const fetchPhotos = async () => {
+const fetchPhotos = async (query = '') => {
   const token = localStorage.getItem('token')
   if (!token) {
     toast.error('Please login to view your gallery')
@@ -80,35 +100,38 @@ const fetchPhotos = async () => {
   }
 
   try {
-    const res = await fetch(`${baseUrl}api/photos`, {
-      headers: {
-        'Authorization': `${token}`
-      }
+    const url = query
+      ? `${baseUrl}api/search?q=${encodeURIComponent(query)}`
+      : `${baseUrl}api/photos`
+    const res = await fetch(url, {
+      headers: { Authorization: token }
     })
-
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch photos')
-    }
+    if (!res.ok) throw new Error('Failed to fetch photos')
 
     const data = await res.json()
-
-    if (!data.photos || data.photos.length == 0){
-      throw new Error('No images found')
+    if (!data.photos || data.photos.length === 0) {
+      toast.info('No images found')
+      photos.value = []
+      return
     }
 
-    
-    photos.value = data.photos.map(photo => ({
-      name: photo.name,
-      url: baseUrl + photo.path.replace(/\\/g, '/'), // convert Windows path
-      upload_at: photo.upload_at * 1000
+    photos.value = data.photos.map(p => ({
+      name: p.name,
+      url: baseUrl + p.path.replace(/\\/g, '/'),
+      upload_at: p.upload_at * 1000
     }))
   } catch (err) {
     toast.error(`Error: ${err.message}`)
   }
 }
 
-onMounted(fetchPhotos)
+const handleSearch = () => {
+  fetchPhotos(searchQuery.value.trim())
+}
+
+
+onMounted(() => fetchPhotos())
+
 
 const selectedPhoto = ref(null)
 
