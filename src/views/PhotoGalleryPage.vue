@@ -61,6 +61,18 @@
       </div>
     </div>
 
+
+  <div class="pt-5">
+    <div v-if="hasNext" class="text-center mt-4">
+      <button @click="loadNextPage" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded cursor-pointer">
+        Load More
+      </button>
+    </div>
+  </div>
+    
+
+
+
     <!-- Fullscreen Modal -->
     <div
       v-if="selectedPhoto"
@@ -90,8 +102,11 @@ const toast = useToast()
 const baseUrl = 'http://localhost:8080/'
 const searchQuery = ref('')
 
+const page = ref(1)
+const hasNext = ref(true)
+const totalPages = ref(1)
 
-const fetchPhotos = async (query = '') => {
+const fetchPhotos = async (query = '', pageNumber = 1) => {
   const token = localStorage.getItem('token')
   if (!token) {
     toast.error('Please login to view your gallery')
@@ -101,8 +116,9 @@ const fetchPhotos = async (query = '') => {
 
   try {
     const url = query
-      ? `${baseUrl}api/search?q=${encodeURIComponent(query)}`
-      : `${baseUrl}api/photos`
+      ? `${baseUrl}api/search?q=${encodeURIComponent(query)}&page=${pageNumber}`
+      : `${baseUrl}api/photos?page=${pageNumber}`
+
     const res = await fetch(url, {
       headers: { Authorization: token }
     })
@@ -110,28 +126,38 @@ const fetchPhotos = async (query = '') => {
 
     const data = await res.json()
     if (!data.photos || data.photos.length === 0) {
-      toast.info('No images found')
-      photos.value = []
+      if (pageNumber === 1) {
+        toast.info('No images found')
+        photos.value = []
+      }
+      hasNext.value = false
       return
     }
 
-    photos.value = data.photos.map(p => ({
+    if (pageNumber === 1) {
+      photos.value = []
+    }
+    photos.value.push(...data.photos.map(p => ({
       name: p.name,
       url: baseUrl + p.path.replace(/\\/g, '/'),
       upload_at: p.upload_at * 1000
-    }))
+    })))
+
+    // Update pagination state
+    page.value = data.page || 1
+    totalPages.value = data.totalPages || 1
+    hasNext.value = page.value < totalPages.value
   } catch (err) {
     toast.error(`Error: ${err.message}`)
   }
 }
 
 const handleSearch = () => {
-  fetchPhotos(searchQuery.value.trim())
+  page.value = 1
+  fetchPhotos(searchQuery.value.trim(), 1)
 }
 
-
 onMounted(() => fetchPhotos())
-
 
 const selectedPhoto = ref(null)
 
@@ -142,4 +168,12 @@ function openPreview(photo) {
 function closePreview() {
   selectedPhoto.value = null
 }
+
+function loadNextPage() {
+  if (hasNext.value) {
+    page.value += 1
+    fetchPhotos(searchQuery.value.trim(), page.value)
+  }
+}
 </script>
+
