@@ -99,7 +99,7 @@ import { useToast } from 'vue-toast-notification'
 const photos = ref([])
 const router = useRouter()
 const toast = useToast()
-const baseUrl = 'http://localhost:8080/'
+const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/`
 const searchQuery = ref('')
 
 const page = ref(1)

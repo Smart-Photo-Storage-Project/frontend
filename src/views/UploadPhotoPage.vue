@@ -85,7 +85,7 @@ async function handleUpload() {
   }
 
   try {
-    const res = await fetch('http://localhost:8080/api/upload', {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/upload`, {
       method: 'POST',
       headers: {
         Authorization: `${token}`
