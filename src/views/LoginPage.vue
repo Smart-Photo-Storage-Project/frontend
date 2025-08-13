@@ -1,9 +1,6 @@
 <template>
   <section class="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-600 px-4">
 
-    
-
-
     <div class="bg-gray-900 shadow-lg rounded-lg p-8 w-full max-w-md">
         <router-link
             to="/"
