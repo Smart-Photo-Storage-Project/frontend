@@ -39,7 +39,7 @@
               >
                 <!-- 🔴 Red dot if unread -->
                <span
-                  v-if="!notif.Read"
+                  v-if="!notif.read"
                   class="absolute top-8 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow"
                 >
                   New!
@@ -112,7 +112,7 @@ const fetchNotifications = async () => {
 
     const data = await res.json()
     notifications.value = data.reverse()
-    unreadCount.value = notifications.value.filter(n => n.Read !== true && n.Read !== 'true').length
+    unreadCount.value = notifications.value.filter(n => n.read !== true && n.read !== 'true').length
     console.log(notifications.value)
   } catch (err) {
     console.error('Error fetching notifications:', err)
@@ -151,7 +151,7 @@ const toggleDropdown = async () => {
 
   if (showDropdown.value && unreadCount.value > 0) {
     const unreadIds = notifications.value
-      .filter(n => !n.Read)
+      .filter(n => !n.read)
       .map(n => n.id)
 
     const token = localStorage.getItem('token')
